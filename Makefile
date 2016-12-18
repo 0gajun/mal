@@ -77,7 +77,7 @@ DOCKERIZE =
 # Settings
 #
 
-IMPLS = ada awk bash basic c d chuck clojure coffee common-lisp cpp crystal cs dart \
+IMPLS = camlisp ada awk bash basic c d chuck clojure coffee common-lisp cpp crystal cs dart \
 	erlang elisp elixir es6 factor forth fsharp go groovy guile haskell \
 	haxe io java julia js kotlin logo lua make mal ocaml matlab miniMAL \
 	nim objc objpascal perl perl6 php pil plpgsql plsql powershell ps \
@@ -144,6 +144,7 @@ STEP_TEST_FILES = $(strip $(wildcard \
 		      $(1)/tests/$($(s)).mal tests/$($(s)).mal)))
 
 # Map of step (e.g. "step8") to executable file for that step
+camlisp_STEP_TO_PROG =  camlisp/$($(1)).ml
 ada_STEP_TO_PROG =     ada/$($(1))
 awk_STEP_TO_PROG =     awk/$($(1)).awk
 bash_STEP_TO_PROG =    bash/$($(1)).sh
