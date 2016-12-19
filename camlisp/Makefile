@@ -11,7 +11,7 @@ mal: $(LAST_STEP_BIN)
 	cp $< $@
 
 $(STEP_BINS): %: %.ml
-	ocamlopt $< -o $@
+	ocamlfind ocamlopt -linkpkg -thread -package core $< -o $@
 
 clean:
 	rm -f $(STEP_BINS) mal mal_lib.* *.cmo *.cmx *.cmi *.o
