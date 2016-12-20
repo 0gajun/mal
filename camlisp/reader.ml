@@ -1,3 +1,5 @@
+module T = Types.Types
+
 type reader = {
   form: Types.mal_type;
   tokens: string list;
@@ -20,20 +22,28 @@ let gsub re f str =
   |> List.map (function | Str.Delim x -> f x | Str.Text x -> x)
   |> String.concat ""
 
+let mal_list_to_map forms =
+  let rec loop map = function
+    | [] -> map
+    | [_] -> raise End_of_file
+    | key :: value :: xs -> loop (Types.MalMap.add key value map) xs
+  in
+  T.Map (loop Types.MalMap.empty forms)
+
 let read_atom token =
   match token with
-  | "nil" -> Types.Nil
-  | "true" -> Types.Bool true
-  | "false" -> Types.Bool false
+  | "nil" -> T.Nil
+  | "true" -> T.Bool true
+  | "false" -> T.Bool false
   | _ ->
     match token.[0] with
-    | '0'..'9' -> Types.Integer (int_of_string token)
-    | '"' -> Types.String (gsub (Str.regexp "\\\\.") 
+    | '0'..'9' -> T.Integer (int_of_string token)
+    | '"' -> T.String (gsub (Str.regexp "\\\\.") 
                              (function | "\\n" -> "\n" | x -> String.sub x 1 1)
                              (String.sub token 1 ((String.length token) - 2))
                           )
-    | ':' -> Types.Keyword (Str.replace_first (Str.regexp "^:") "" token)
-    | _ -> Types.Symbol token
+    | ':' -> T.Keyword (Str.replace_first (Str.regexp "^:") "" token)
+    | _ -> T.Symbol token
 
 let rec read_list eol list_reader = 
   match list_reader.tokens with
@@ -51,14 +61,23 @@ and read_form all_tokens =
   | [] -> raise End_of_file
   | token :: tokens ->
     match token with
+    | "'" -> read_quote "quote" tokens
+    | "`" -> read_quote "quasiquote" tokens
+    | "~" -> read_quote "unquote" tokens
+    | "~@" -> read_quote "splice-unquote" tokens
     | "(" -> let list_reader = read_list ")" { forms = []; tokens = tokens } in
-      { form = Types.List list_reader.forms; tokens = list_reader.tokens }
+      { form = T.List list_reader.forms; tokens = list_reader.tokens }
     | "[" -> let list_reader = read_list "]" { forms = []; tokens = tokens } in
-      { form = Types.Vector list_reader.forms; tokens = list_reader.tokens }
+      { form = T.Vector list_reader.forms; tokens = list_reader.tokens }
+    | "{" -> let list_reader = read_list "}" { forms = []; tokens = tokens } in
+      { form = mal_list_to_map list_reader.forms; tokens = list_reader.tokens }
     | "\"" -> raise End_of_file (* Handling imcomplete string literal *)
     | _ -> let form = read_atom token in
       { form = form; tokens = tokens }
 
+and read_quote quote tokens =
+  let reader = read_form tokens in
+  { form = T.List [T.Symbol quote; reader.form]; tokens = reader.tokens }
 
 let read_str str =
   try
