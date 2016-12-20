@@ -13,10 +13,10 @@ mal: $(LAST_STEP_BIN)
 	cp $< $@
 
 $(MAL_LIB): $(MODULES)
-	ocamlfind ocamlopt -package pcre -a $(MODULES) -o $@
+	ocamlfind ocamlopt -package str,pcre -a $(MODULES) -o $@
 
 $(STEP_BINS): %: %.ml $(MAL_LIB)
-	ocamlfind ocamlopt -linkpkg -thread -package core,pcre $(MAL_LIB) $< -o $@
+	ocamlfind ocamlopt -linkpkg -thread -package core,str,pcre $(MAL_LIB) $< -o $@
 
 clean:
 	rm -f $(STEP_BINS) mal mal_lib.* *.cmo *.cmx *.cmi *.o
